@@ -21,7 +21,7 @@ const BookRide = () => {
   
 
     const driverDetails = drivers?.filter(
-        (driver) => +driver.id == selectedDriver,
+        (driver) => driver.id == selectedDriver,
     )[0];
 
 

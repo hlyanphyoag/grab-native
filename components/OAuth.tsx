@@ -29,7 +29,7 @@ export default function OAuth() {
 
         <CustomButton 
             title='Login with Google' 
-            className='w-full shadow-none mt-5'
+            className='w-full mt-5'
             IconLeft={() => <Image source={icons.google} resizeMode='contain' className='w-5 h-5 mx-2'/>}
             bgVariant='outline'
             textVariant='primary'

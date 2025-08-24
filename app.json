@@ -24,7 +24,12 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
+      "package": "com.hlyanphyo.nativeuber"
     },
     "web": {
       "bundler": "metro",
@@ -35,7 +40,20 @@
       [
         "expo-router",
         {
-          "origin": "https://uber.dev/"
+          "origin": "https://native-uber--mif7znxyuy.expo.app"
+        }
+      ],
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "com.hlyanphyo.nativeuber",
+          "enableGooglePay": true
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Native Uber to use your location."
         }
       ]
     ],
@@ -44,7 +62,7 @@
     },
     "extra": {
       "router": {
-        "origin": "https://uber.dev/"
+        "origin": "https://native-uber--mif7znxyuy.expo.app"
       },
       "eas": {
         "projectId": "3dfa228a-80dd-404a-bb0f-24256a560cb6"

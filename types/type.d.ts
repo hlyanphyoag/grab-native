@@ -13,7 +13,7 @@ declare interface Driver {
 declare interface MarkerData {
     latitude: number;
     longitude: number;
-    id: number; 
+    id?: number; 
     title: string;
     profile_image_url: string;
     car_image_url: string;
@@ -68,7 +68,8 @@ declare interface GoogleInputProps {
     initialLocation?: string;
     containerStyle?: string;
     textInputBackgroundColor?: string;
-
+    allocation?: any;
+    placeholder?: string;
     handlePress: (item: any) => void
 }
 

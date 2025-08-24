@@ -5,9 +5,17 @@ import React from 'react';
 import { Image, Text, View } from 'react-native';
 
 export default function RideCard({rides: {origin_address, origin_latitude, origin_longitude, destination_address, destination_latitude, destination_longitude, driver, driver_id, created_at, ride_time, payment_status}} : {rides: Ride}) {
-    console.log('lat:', `https://maps.geoapify.com/v1/staticmap?style=osm-bright-smooth&width=600&height=400&center=lonlat:${destination_latitude},${destination_longitude}&zoom=14&apiKey=${process.env.EXPO_PUBLIC_GEOMAP_API_KEY}`)
   return (
-    <View className='flex flex-col justify-center items-center bg-white shadow-sm shadow-neutral-300 mb-3 rounded-lg'>
+    <View 
+      className='flex flex-col justify-center items-center bg-white mb-3 rounded-lg'
+      style={{
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
+      }}
+    >
        
         <View className='flex flex-row justify-between  items-center p-3'>
          <View className=''>

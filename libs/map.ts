@@ -39,8 +39,8 @@ export const calculateRegion = ({
         return {
             latitude: 37.78825,
             longitude: -122.4324,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
+            latitudeDelta: 0.05,
+            longitudeDelta: 0.05,
         };
     }
 
@@ -48,8 +48,8 @@ export const calculateRegion = ({
         return {
             latitude: userLatitude,
             longitude: userLongitude,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
         };
     }
 
@@ -73,57 +73,64 @@ export const calculateRegion = ({
 };
 
 export const calculateDriverTimes = async ({
-                                               markers,
-                                               userLatitude,
-                                               userLongitude,
-                                               destinationLatitude,
-                                               destinationLongitude,
-                                           }: {
-    markers: MarkerData[];
-    userLatitude: number | null;
-    userLongitude: number | null;
-    destinationLatitude: number | null;
-    destinationLongitude: number | null;
+  markers,
+  userLatitude,
+  userLongitude,
+  destinationLatitude,
+  destinationLongitude,
+}: {
+  markers: MarkerData[];
+  userLatitude: number | null | undefined;
+  userLongitude: number | null | undefined;
+  destinationLatitude: number | null | undefined;
+  destinationLongitude: number | null | undefined;
 }) => {
-    if (
-        !userLatitude ||
-        !userLongitude ||
-        !destinationLatitude ||
-        !destinationLongitude
-    )
-        return;
+  if (
+    !userLatitude ||
+    !userLongitude ||
+    !destinationLatitude ||
+    !destinationLongitude
+  )
+    return [];
 
-    try {
-        const timesPromises = markers.map(async (marker) => {
-            const responseToUser = await fetch(
-                  `https://api.geoapify.com/v1/routing?waypoints=${marker.latitude},${marker.longitude}|${userLatitude},${userLongitude}&mode=drive&apiKey=${process.env.EXPO_PUBLIC_GEOMAP_API_KEY}`
-            );
+  const apiKey = process.env.EXPO_PUBLIC_GEOMAP_API_KEY;
+  const base = 'https://api.geoapify.com/v1/routing';
 
-            const dataToUser = await responseToUser.json()
-            
-            const timeToUser = dataToUser.features[0].properties.time; // Time in seconds
-            // console.log('To User:', timeToUser)
+  const buildUrl = (fromLat: number, fromLng: number, toLat: number, toLng: number) =>
+    `${base}?waypoints=${fromLat},${fromLng}|${toLat},${toLng}&mode=drive&apiKey=${apiKey}`;
 
-            const responseToDestination = await fetch(
-                `https://api.geoapify.com/v1/routing?waypoints=${userLatitude},${userLongitude}|${destinationLatitude},${destinationLongitude}&mode=drive&apiKey=${process.env.EXPO_PUBLIC_GEOMAP_API_KEY}`
-            );
-            const dataToDestination = await responseToDestination.json();
-            const timeToDestination = dataToDestination.features[0].properties.time;
+  try {
+    const promises = markers.map(async (marker) => {
+      // --- fetch #1 ---
+      const res1 = await fetch(
+        buildUrl(marker.latitude, marker.longitude, userLatitude, userLongitude)
+      );
+      const data1 = await res1.json();
+      const time1 = data1?.features?.[0]?.properties?.time;
+      if (time1 == null) return null;
 
-            const routePath = dataToDestination.features[0].geometry.coordinates[0].map((item : any)=> ({
-                lat: item[1],
-                lng: item[0]
-            }))
-                
-            const totalTime = Math.floor((timeToUser + timeToDestination) / 60); // Total time in minutes
-            console.log('Total Time:', totalTime)
-            const price = (totalTime * 0.5).toFixed(2); // Calculate price based on time
+      // --- fetch #2 ---
+      const res2 = await fetch(
+        buildUrl(userLatitude, userLongitude, destinationLatitude, destinationLongitude)
+      );
+      const data2 = await res2.json();
+      const time2 = data2?.features?.[0]?.properties?.time;
 
-            return {...marker, time: totalTime, price, routePath};
-        });
+      if (time2 == null) return null;
 
-        return await Promise.all(timesPromises);
-    } catch (error) {
-        console.error("Error calculating driver times:", error);
-    }
+      const coords = data2?.features?.[0]?.geometry?.coordinates?.[0] ?? [];
+      const routePath = coords.map(([lng, lat]: [number, number]) => ({ lat, lng }));
+
+      const totalTime = Math.floor((time1 + time2) / 60);
+      const price = (totalTime * 0.5).toFixed(2);
+
+      return { ...marker, time: totalTime, price, routePath };
+    });
+
+    const results = await Promise.all(promises);
+    return results.filter(Boolean); // drop any nulls
+  } catch (err) {
+    console.error('calculateDriverTimes error:', err);
+    return [];
+  }
 };

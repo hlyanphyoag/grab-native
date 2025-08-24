@@ -4,7 +4,7 @@ export const fetchAPI = async (url: string, options?: RequestInit) => {
   try {
     const response = await fetch(url, options);
     if (!response.ok) {
-      new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
     return await response.json();
   } catch (error) {
@@ -17,14 +17,14 @@ export const useFetch = <T>(url: string, options?: RequestInit) => {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  console.log("You are perfect dev")
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
-
     try {
+      console.log("yoh", url)
       const result = await fetchAPI(url, options);
-      setData(result.data);
+      setData(result.data ? result.data : result);
     } catch (err) {
       setError((err as Error).message);
     } finally {
