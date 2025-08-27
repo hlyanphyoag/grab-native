@@ -1,6 +1,6 @@
 import { useLocationStore } from "@/app/stores";
 import GoogleTextInput from "@/components/GoogleTextInput";
-import Map from "@/components/Map";
+import MapSelector from "@/components/MapSelector";
 import RideCard from "@/components/RideCard";
 import { icons, images } from "@/constants";
 import { useFetch } from "@/libs/fetch";
@@ -15,8 +15,7 @@ import {
   Image,
   Text,
   TouchableOpacity,
-  View,
-  Platform,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -47,8 +46,22 @@ export default function Home() {
   );
   const [haspermission, setHasPermission] = useState<boolean>(false);
   const [data, setData] = useState<any>([]);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
-  
+  // Default location - WYTU EC Department, Yangon, Myanmar
+  //16.869777, 96.009742
+  const DEFAULT_LOCATION = {
+    latitude: 16.869777,
+    longitude: 96.009742,
+    address: "WYTU EC Department, V295+WV5, Yangon, Myanmar (Burma)"
+  };
+
+  // Set default location fallback function
+  const setDefaultLocation = () => {
+    console.log('📍 Using default location: WYTU EC Department');
+    setUserLocation(DEFAULT_LOCATION);
+    setHasPermission(true);
+  };
 
   useEffect(() => {
     const requestLocation = async () => {
@@ -56,17 +69,25 @@ export default function Home() {
         // Request permissions
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== "granted") {
-          setHasPermission(false);
+          console.log('❌ Location permission denied, using default location');
+          setDefaultLocation();
           return;
         }
 
-        // Simple GPS approach for all devices
+        // Single GPS attempt
         try {
+          console.log('🔍 Getting current location...');
           const location = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.Balanced,
+            accuracy: Location.Accuracy.High,
           });
           
-          // Get detailed address from coordinates - enhanced for Android
+          console.log('✅ GPS location found:', {
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+            accuracy: location.coords.accuracy
+          });
+          
+          // Get address from coordinates
           let address = `${location.coords.latitude.toFixed(4)}, ${location.coords.longitude.toFixed(4)}`;
           try {
             const addressResult = await Location.reverseGeocodeAsync({
@@ -74,13 +95,10 @@ export default function Home() {
               longitude: location.coords.longitude,
             });
             
-            console.log('Android reverse geocode result:', JSON.stringify(addressResult[0], null, 2));
-            
             if (addressResult && addressResult.length > 0) {
               const addr = addressResult[0];
               let formattedAddress = '';
               
-              // Enhanced address formatting for Android compatibility
               if (addr.streetNumber && addr.street) {
                 formattedAddress = `${addr.streetNumber} ${addr.street}`;
               } else if (addr.street) {
@@ -91,27 +109,17 @@ export default function Home() {
                 formattedAddress = addr.district;
               } else if (addr.subregion) {
                 formattedAddress = addr.subregion;
-              } else if (addr.thoroughfare) {
-                formattedAddress = addr.thoroughfare;
-              } else if (addr.subThoroughfare) {
-                formattedAddress = addr.subThoroughfare;
               }
               
-              // Add city/locality info
               let cityPart = '';
               if (addr.city) {
                 cityPart = addr.city;
-              } else if (addr.locality) {
-                cityPart = addr.locality;
               } else if (addr.region) {
                 cityPart = addr.region;
-              } else if (addr.administrativeArea) {
-                cityPart = addr.administrativeArea;
               } else if (addr.country) {
                 cityPart = addr.country;
               }
               
-              // Combine parts
               if (formattedAddress && cityPart) {
                 address = `${formattedAddress}, ${cityPart}`;
               } else if (formattedAddress) {
@@ -119,11 +127,9 @@ export default function Home() {
               } else if (cityPart) {
                 address = cityPart;
               }
-              // If all fails, keep coordinates as fallback
             }
           } catch (addressError) {
-            console.log('Android reverse geocode error:', addressError);
-            // Keep coordinates as fallback
+            console.log('⚠️ Reverse geocoding failed, using coordinates');
           }
           
           setUserLocation({
@@ -132,21 +138,22 @@ export default function Home() {
             address: address,
           });
           setHasPermission(true);
+          
         } catch (error) {
-          setHasPermission(false);
+          console.log('❌ GPS location failed:', error);
+          console.log('📍 Using default location (WYTU EC Department)');
+          setDefaultLocation();
         }
-        
 
       } catch (error) {
-        // Silent fail
+        console.log('❌ Location request failed:', error);
+        console.log('📍 Using default location (WYTU EC Department)');
+        setDefaultLocation();
       }
     };
 
-    // Start immediately
     requestLocation();
   }, []);
-
-
 
   return (
     <SafeAreaView>
@@ -203,19 +210,19 @@ export default function Home() {
                 <Text className="text-sm font-JakartaMedium text-gray-600">
                   Location: {haspermission ? 'Active' : 'Inactive'}
                 </Text>
-
               </View>
-                            <TouchableOpacity
+              <TouchableOpacity
                 onPress={async () => {
+                  setIsRefreshing(true);
                   setHasPermission(false);
                   
-                  // Enhanced GPS refresh for all devices  
                   try {
+                    console.log('🔍 Refreshing location...');
                     const location = await Location.getCurrentPositionAsync({
                       accuracy: Location.Accuracy.Balanced,
                     });
                     
-                    // Get detailed address from coordinates - same as initial load
+                    // Get address from coordinates
                     let address = `${location.coords.latitude.toFixed(4)}, ${location.coords.longitude.toFixed(4)}`;
                     try {
                       const addressResult = await Location.reverseGeocodeAsync({
@@ -227,7 +234,6 @@ export default function Home() {
                         const addr = addressResult[0];
                         let formattedAddress = '';
                         
-                        // Enhanced address formatting for Android compatibility
                         if (addr.streetNumber && addr.street) {
                           formattedAddress = `${addr.streetNumber} ${addr.street}`;
                         } else if (addr.street) {
@@ -238,27 +244,17 @@ export default function Home() {
                           formattedAddress = addr.district;
                         } else if (addr.subregion) {
                           formattedAddress = addr.subregion;
-                        } else if (addr.thoroughfare) {
-                          formattedAddress = addr.thoroughfare;
-                        } else if (addr.subThoroughfare) {
-                          formattedAddress = addr.subThoroughfare;
                         }
                         
-                        // Add city/locality info
                         let cityPart = '';
                         if (addr.city) {
                           cityPart = addr.city;
-                        } else if (addr.locality) {
-                          cityPart = addr.locality;
                         } else if (addr.region) {
                           cityPart = addr.region;
-                        } else if (addr.administrativeArea) {
-                          cityPart = addr.administrativeArea;
                         } else if (addr.country) {
                           cityPart = addr.country;
                         }
                         
-                        // Combine parts
                         if (formattedAddress && cityPart) {
                           address = `${formattedAddress}, ${cityPart}`;
                         } else if (formattedAddress) {
@@ -268,7 +264,7 @@ export default function Home() {
                         }
                       }
                     } catch (addressError) {
-                      // Keep coordinates as fallback
+                      console.log('⚠️ Reverse geocoding failed during refresh');
                     }
                     
                     setUserLocation({
@@ -277,13 +273,21 @@ export default function Home() {
                       address: address,
                     });
                     setHasPermission(true);
-                  } catch (error) {
-                    setHasPermission(false);
+                    
+                  } catch (refreshError) {
+                    console.log('❌ Location refresh failed:', refreshError.message);
+                    console.log('📍 Using default location (WYTU EC Department)');
+                    setDefaultLocation();
+                  } finally {
+                    setIsRefreshing(false);
                   }
                 }}
                 className="bg-blue-500 px-3 py-1 rounded-lg"
+                disabled={isRefreshing}
               >
-                <Text className="text-white text-xs font-JakartaMedium">Refresh</Text>
+                <Text className="text-white text-xs font-JakartaMedium">
+                  {isRefreshing ? 'Finding...' : 'Refresh'}
+                </Text>
               </TouchableOpacity>
             </View>
             <>
@@ -292,7 +296,11 @@ export default function Home() {
                   Your Current Location
                 </Text>
                 <View className="h-[300px] w-full bg-gray-100 rounded-2xl overflow-hidden">
-                  <Map />
+                  <MapSelector />
+                  {/* <PureOpenStreetMap /> */}
+                  {/* <MapboxNativeView /> */}
+                  {/* <OSMMapView /> */}
+                  {/* <NativeMapbox /> */}
                 </View>
               </View>
               <Text className="text-xl font-JakartaBold mb-3 mt-5">

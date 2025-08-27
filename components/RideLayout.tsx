@@ -4,7 +4,7 @@ import { router } from 'expo-router'
 import React, { useRef } from 'react'
 import { Image, Text, TouchableOpacity, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import Map from './Map'
+import MapSelector from './MapSelector'
 
 
 export default function RideLayout({ children, title, snapPoints }: { children: React.ReactNode, title: string, snapPoints: string[] }) {
@@ -23,7 +23,7 @@ export default function RideLayout({ children, title, snapPoints }: { children: 
                     </View>
                 </View>
             </View>
-            <Map />
+            <MapSelector />
             <BottomSheet keyboardBehavior='extend' ref={bottomSheetRef} snapPoints={snapPoints || ['45%', '85%']} index={0}>
                 <BottomSheetView style={{padding: 20, flex: 1}}>
                     {children}

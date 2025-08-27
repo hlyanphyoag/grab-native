@@ -3,13 +3,12 @@
     "name": "UberNative",
     "slug": "native-uber",
     "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/images/splash.png",
+    "icon": "./assets/images/splash-icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#232323",
     "splash": {
-      "image": "./assets/images/splash.png",
+      "image": "./assets/images/splash-icon.png",
       "resizeMode": "cover",
       "backgroundColor": "#2f80ed",
       "dark": {
@@ -24,6 +23,11 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
+      },
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBtQg9PxCBAsIy1_4OPYJ6TFeiRF04wW9Y"
+        }
       },
       "permissions": [
         "ACCESS_FINE_LOCATION",
@@ -47,7 +51,8 @@
         "@stripe/stripe-react-native",
         {
           "merchantIdentifier": "com.hlyanphyo.nativeuber",
-          "enableGooglePay": true
+          "enableGooglePay": false,
+          "publishableKey" : "pk_test_51ROCmRQ1p5QSJigqsX22WV9xr6pnIM3Ir42VZCzI51e86HuOEUJkYFjcXK4RL3jCX9CceO4u1aCQjUdDquEvJyME00GDX4Tvwc"
         }
       ],
       [
@@ -55,7 +60,16 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Allow Native Uber to use your location."
         }
-      ]
+      ],
+      [
+        "@rnmapbox/maps",
+        {
+          "RNMapboxMapsImpl": "mapbox",
+          "RNMapboxMapsDownloadToken": "sk.eyJ1IjoiaGx5YW5waHlvIiwiYSI6ImNtZXRmbGsweTBkdmoyanNhcnVvMm1tOHQifQ.N0EPAZPQ5MfAJ5DuaFgq5w"
+        }
+      ],
+      "expo-secure-store",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

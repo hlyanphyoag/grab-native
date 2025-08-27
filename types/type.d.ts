@@ -10,6 +10,10 @@ declare interface Driver {
     rating: number;
 }
 
+declare interface ClearLocationStore {
+    clearLocationState: () => void;
+}
+
 declare interface MarkerData {
     latitude: number;
     longitude: number;

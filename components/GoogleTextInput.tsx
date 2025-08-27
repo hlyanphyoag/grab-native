@@ -3,13 +3,13 @@ import { icons } from '@/constants';
 import { GoogleInputProps } from '@/types/type';
 import { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Image,
+  Pressable,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
-  ActivityIndicator,
-  Pressable
+  View
 } from 'react-native';
 
 interface featuresProps {
@@ -139,7 +139,7 @@ const GeoapifyAutocomplete = ({
                 </Text>
               </View>
                          ) : results.length > 0 ? (
-               <View style={{ maxHeight: 250 }}>
+               <View style={{ }}>
                  {results.map((item, index) => (
                    <View key={index}>
                      <Pressable

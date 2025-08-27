@@ -2,16 +2,16 @@ import { useDriverStore, useLocationStore } from '@/app/stores';
 import { icons } from '@/constants';
 import { useFetch } from '@/libs/fetch';
 import {
-  calculateDriverTimes,
-  calculateRegion,
-  generateMarkersFromData
+    calculateDriverTimes,
+    calculateRegion,
+    generateMarkersFromData
 } from '@/libs/map';
 import { Driver, MarkerData } from '@/types/type';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
-import MapView, { Marker, Polyline, Provider, PROVIDER_DEFAULT, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker, Polyline, UrlTile } from 'react-native-maps';
 
-export default function Map() {
+export default function OpenStreetMap() {
   const { data: drivers, loading, error } = useFetch<Driver[]>('/(api)/driver');
 
   const {
@@ -32,8 +32,6 @@ export default function Map() {
   const { selectedDriver, setDrivers } = useDriverStore();
   const [markers, setMarkers] = useState<MarkerData[]>([]);
   const [mapError, setMapError] = useState<string | null>(null);
-  const [mapProvider, setMapProvider] = useState<Provider>(PROVIDER_GOOGLE);
-  const [mapReady, setMapReady] = useState(false);
 
   // Convert driver data to marker data and store it
   useEffect(() => {
@@ -80,21 +78,6 @@ export default function Map() {
     }
   }, [userLatitude, userLongitude, destinationLatitude, destinationLongitude]);
 
-  // Fallback mechanism: If Google Maps doesn't load within 10 seconds, switch to default provider
-  useEffect(() => {
-    if (mapProvider === PROVIDER_GOOGLE && !mapReady) {
-      const timeout = setTimeout(() => {
-        if (!mapReady) {
-          console.log('Google Maps failed to load, switching to default provider');
-          setMapProvider(PROVIDER_DEFAULT);
-          setMapReady(false); // Reset for the new provider
-        }
-      }, 10000); // 10 seconds timeout
-
-      return () => clearTimeout(timeout);
-    }
-  }, [mapProvider, mapReady]);
-
   // Calculate driver times once markers and destination are available
   useEffect(() => {
     if (
@@ -116,12 +99,6 @@ export default function Map() {
       });
     }
   }, [markers, destinationLatitude, destinationLongitude]);
-
-  // Handle map errors
-  const handleMapError = (error: any) => {
-    console.log('Map error:', error);
-    setMapError('Map failed to load. Please check your internet connection.');
-  };
 
   // Loading state
   if (loading || !userLatitude || !userLongitude) {
@@ -147,42 +124,43 @@ export default function Map() {
     );
   }
 
-  // Debug info
-  console.log('Map render - Region:', region);
-  console.log('Map render - User location:', { userLatitude, userLongitude });
-  console.log('Map render - Markers count:', markers?.length);
+  console.log('OpenStreetMap render - User location:', { userLatitude, userLongitude });
+  console.log('OpenStreetMap render - Markers count:', markers?.length);
 
-  // Render map
   return (
-    <MapView
-      provider={PROVIDER_DEFAULT}
-      style={{ 
-        height: '100%', 
-        width: '100%', 
-        borderRadius: 16,
-        overflow: 'hidden'
-      }}
-      tintColor="blue"
+    <View style={{ 
+      height: '100%', 
+      width: '100%', 
+      borderRadius: 16,
+      overflow: 'hidden',
+      position: 'relative'
+    }}>
+      <MapView
+        style={{ 
+          height: '100%', 
+          width: '100%'
+        }}
       region={region}
       showsUserLocation={true}
-      userInterfaceStyle="light"
-      showsCompass={true}
       showsMyLocationButton={false}
-      showsBuildings={true}
-      showsTraffic={false}
-      mapType="standard"
+      showsCompass={true}
       onMapReady={() => {
-        console.log('Map is ready');
+        console.log('OpenStreetMap is ready');
         setMapError(null);
-        setMapReady(true);
       }}
-      onRegionChange={() => {}}
-
       onMapLoaded={() => {
-        console.log('Map loaded successfully');
+        console.log('OpenStreetMap loaded successfully');
       }}
       initialRegion={region}
     >
+      {/* OpenStreetMap tiles - completely free! */}
+      <UrlTile
+        urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+        maximumZ={19}
+        flipY={false}
+      />
+
+      {/* Driver markers */}
       {Array.isArray(markers) &&
         markers.map((marker) => {
           if (
@@ -196,7 +174,7 @@ export default function Map() {
 
           return (
             <Marker
-              key={marker.id}
+              key={`driver-${marker.id}`}
               coordinate={{
                 latitude: marker.latitude,
                 longitude: marker.longitude
@@ -211,6 +189,7 @@ export default function Map() {
           );
         })}
 
+      {/* Destination marker and route */}
       {destinationLatitude && destinationLongitude && (
         <>
           <Marker
@@ -225,6 +204,30 @@ export default function Map() {
           <Polyline coordinates={route} strokeColor="#0286ff" strokeWidth={3} />
         </>
       )}
-    </MapView>
+      </MapView>
+      
+      {/* Cover Google logo area completely */}
+      <View style={{
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        left: 0,
+        height: 40,
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        zIndex: 1000,
+        justifyContent: 'center',
+        alignItems: 'flex-end',
+        paddingRight: 12,
+        paddingBottom: 8
+      }}>
+        <Text style={{
+          fontSize: 11,
+          color: '#666',
+          fontWeight: '500'
+        }}>
+          © OpenStreetMap contributors
+        </Text>
+      </View>
+    </View>
   );
 }
